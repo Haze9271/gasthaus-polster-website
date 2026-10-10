@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f7f3">
+  <title>Waischenfeld Camping · Gästemanagement</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #24342c;
+      --muted: #7b877f;
+      --line: #e8ebe5;
+      --paper: #fff;
+      --canvas: #f6f7f3;
+      --green: #315d46;
+      --green-dark: #254a37;
+      --green-soft: #eaf2eb;
+      --orange: #d38a4c;
+      --shadow: 0 12px 36px rgba(31, 54, 39, .07);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; background: var(--canvas); color: var(--ink); }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .app { min-height: 100vh; }
+    .sidebar {
+      position: fixed; inset: 0 auto 0 0; z-index: 3; width: 246px; padding: 27px 18px;
+      background: #fff; border-right: 1px solid var(--line); display: flex; flex-direction: column;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; padding: 0 9px 34px; }
+    .brand-mark {
+      width: 40px; height: 40px; display: grid; place-items: center; border-radius: 13px;
+      background: var(--green); color: white;
+    }
+    .brand-mark svg { width: 23px; height: 23px; }
+    .brand-name { font-weight: 750; font-size: 14px; letter-spacing: -.25px; }
+    .brand-sub { color: var(--muted); font-size: 11px; margin-top: 3px; }
+    .nav-label { color: #a0a9a2; font-size: 10px; font-weight: 750; letter-spacing: 1.2px; padding: 0 12px 10px; }
+    .nav { display: grid; gap: 5px; }
+    .nav button {
+      border: 0; background: transparent; color: #69766e; text-align: left; padding: 11px 12px;
+      border-radius: 10px; font-size: 13px; display: flex; align-items: center; gap: 12px;
+    }
+    .nav button:hover { background: #f7f8f5; color: var(--ink); }
+    .nav button.active { color: var(--green); background: var(--green-soft); font-weight: 700; }
+    .nav svg { width: 17px; height: 17px; }
+    .sidebar-note { margin-top: auto; border-radius: 14px; padding: 15px; background: #f5f7f2; }
+    .sidebar-note strong { display: block; font-size: 12px; margin-bottom: 5px; }
+    .sidebar-note span { color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .main { margin-left: 246px; min-height: 100vh; }
+    .topbar {
+      height: 76px; background: rgba(255,255,255,.85); border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between; padding: 0 42px; position: sticky; top: 0; z-index: 2;
+      backdrop-filter: blur(12px);
+    }
+    .breadcrumb { color: var(--muted); font-size: 12px; }
+    .breadcrumb strong { color: var(--ink); font-weight: 650; }
+    .top-actions { display: flex; align-items: center; gap: 15px; }
+    .today { color: var(--muted); font-size: 12px; }
+    .avatar { width: 34px; height: 34px; border-radius: 50%; background: #e7eee5; color: var(--green); display: grid; place-items: center; font-weight: 750; font-size: 11px; }
+    .content { max-width: 1380px; margin: 0 auto; padding: 37px 42px 60px; }
+    .page-head { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 27px; }
+    .eyebrow { color: var(--green); text-transform: uppercase; letter-spacing: 1.25px; font-size: 10px; font-weight: 800; margin-bottom: 8px; }
+    h1 { font-size: clamp(23px, 3vw, 29px); letter-spacing: -.9px; margin: 0; font-weight: 730; }
+    .page-subtitle { color: var(--muted); margin: 7px 0 0; font-size: 13px; }
+    .button {
+      border: 0; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 9px;
+      padding: 10px 14px; font-size: 12px; font-weight: 700; transition: .15s ease;
+    }
+    .button-primary { color: #fff; background: var(--green); box-shadow: 0 4px 10px rgba(49,93,70,.15); }
+    .button-primary:hover { background: var(--green-dark); transform: translateY(-1px); }
+    .button-secondary { color: #526158; border: 1px solid var(--line); background: white; }
+    .button-secondary:hover { border-color: #bdc9be; }
+    .button svg { width: 15px; height: 15px; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 22px; }
+    .stat-card, .panel { background: var(--paper); border: 1px solid var(--line); border-radius: 13px; box-shadow: var(--shadow); }
+    .stat-card { padding: 18px 19px; min-height: 126px; }
+    .stat-top { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 11px; font-weight: 600; }
+    .stat-icon { width: 31px; height: 31px; border-radius: 10px; display: grid; place-items: center; background: var(--green-soft); color: var(--green); }
+    .stat-icon.orange { background: #fbf0e5; color: #b46e34; }
+    .stat-icon svg { width: 16px; height: 16px; }
+    .stat-value { font-size: 27px; font-weight: 740; letter-spacing: -.8px; margin-top: 13px; }
+    .stat-foot { color: #98a19a; font-size: 10px; margin-top: 4px; }
+    .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(260px, .9fr); gap: 17px; }
+    .panel { overflow: hidden; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid #f0f1ed; }
+    .panel-title { font-size: 13px; font-weight: 720; }
+    .panel-caption { color: var(--muted); font-size: 11px; margin-top: 4px; }
+    .text-link { border: 0; color: var(--green); background: transparent; font-weight: 700; font-size: 11px; padding: 5px; }
+    .text-link:hover { text-decoration: underline; }
+    .table-wrap { width: 100%; overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; text-align: left; }
+    th { background: #fcfcfa; padding: 11px 16px; color: #909b92; text-transform: uppercase; letter-spacing: .7px; font-size: 9px; font-weight: 750; white-space: nowrap; }
+    td { padding: 13px 16px; border-top: 1px solid #f0f1ed; font-size: 11px; white-space: nowrap; }
+    tbody tr:hover { background: #fbfcf9; }
+    .guest-cell { display: flex; align-items: center; gap: 9px; }
+    .guest-initials { flex: 0 0 30px; width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; background: #edf2ea; color: var(--green); font-size: 9px; font-weight: 750; }
+    .guest-name { font-size: 11px; font-weight: 680; }
+    .guest-contact { color: #929c94; font-size: 9px; margin-top: 3px; }
+    .status { display: inline-flex; align-items: center; gap: 6px; border-radius: 20px; padding: 5px 8px; font-size: 9px; font-weight: 700; }
+    .status::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .status-confirmed { color: #447954; background: #edf6ee; }
+    .status-pending { color: #ae773c; background: #fff5e8; }
+    .status-cancelled { color: #9b6460; background: #f9eeee; }
+    .activity { padding: 5px 20px 10px; }
+    .activity-item { position: relative; display: grid; grid-template-columns: 30px 1fr; gap: 10px; padding: 13px 0; }
+    .activity-item:not(:last-child)::after { content: ""; position: absolute; left: 14px; top: 43px; bottom: -3px; border-left: 1px solid #e8ece6; }
+    .activity-icon { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 50%; color: var(--green); background: #eef4ed; }
+    .activity-icon svg { width: 13px; height: 13px; }
+    .activity-title { font-size: 10px; font-weight: 650; line-height: 1.4; }
+    .activity-meta { color: #9aa39b; font-size: 9px; margin-top: 5px; }
+    .empty { padding: 34px 20px; text-align: center; color: var(--muted); font-size: 12px; }
+    .empty strong { color: var(--ink); display: block; font-size: 13px; margin-bottom: 7px; }
+    .toolbar { display: flex; gap: 9px; align-items: center; }
+    .search-box { position: relative; }
+    .search-box svg { width: 15px; height: 15px; position: absolute; left: 11px; top: 10px; color: #9aa39b; }
+    .search-box input { width: min(250px, 34vw); padding: 9px 11px 9px 34px; border: 1px solid var(--line); background: white; border-radius: 9px; outline: none; font-size: 11px; }
+    .search-box input:focus, .field input:focus, .field select:focus, .field textarea:focus, .toolbar select:focus { border-color: #8eaa95; box-shadow: 0 0 0 3px #edf4ee; }
+    .toolbar select { padding: 9px 10px; border: 1px solid var(--line); background: white; border-radius: 9px; color: #59675d; font-size: 11px; outline: none; }
+    .list-panel { margin-top: 6px; }
+    .list-panel td { padding-top: 14px; padding-bottom: 14px; }
+    .row-actions { display: flex; gap: 5px; justify-content: flex-end; }
+    .icon-button { border: 0; width: 27px; height: 27px; display: grid; place-items: center; border-radius: 7px; background: transparent; color: #829087; }
+    .icon-button:hover { background: #eef3ed; color: var(--green); }
+    .icon-button.danger:hover { background: #fbefee; color: #a44e49; }
+    .icon-button svg { width: 14px; height: 14px; }
+    .guest-cards { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 13px; }
+    .guest-card { padding: 17px; border-radius: 12px; border: 1px solid var(--line); background: white; box-shadow: var(--shadow); }
+    .guest-card-head { display: flex; align-items: center; gap: 10px; }
+    .guest-card .guest-initials { width: 38px; height: 38px; font-size: 11px; border-radius: 12px; }
+    .guest-card .guest-name { font-size: 12px; }
+    .guest-card p { color: var(--muted); font-size: 10px; margin: 15px 0 0; }
+    .guest-card-foot { display: flex; justify-content: space-between; border-top: 1px solid #f0f1ed; padding-top: 12px; margin-top: 14px; color: var(--muted); font-size: 9px; }
+    .modal-backdrop { display: none; position: fixed; inset: 0; z-index: 10; padding: 20px; background: rgba(25,38,30,.42); place-items: center; }
+    .modal-backdrop.open { display: grid; }
+    .modal { width: min(580px, 100%); max-height: 92vh; overflow-y: auto; background: white; border-radius: 16px; box-shadow: 0 25px 80px rgba(13,31,19,.2); }
+    .modal-head { padding: 21px 23px 17px; border-bottom: 1px solid var(--line); display: flex; align-items: flex-start; justify-content: space-between; }
+    .modal-head h2 { margin: 0; font-size: 18px; letter-spacing: -.4px; }
+    .modal-head p { color: var(--muted); margin: 6px 0 0; font-size: 11px; }
+    .close-button { border: 0; background: #f4f6f2; border-radius: 8px; height: 29px; width: 29px; color: #67746c; font-size: 19px; line-height: 1; }
+    .form { padding: 20px 23px 22px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; }
+    .field { display: grid; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { font-size: 10px; font-weight: 700; color: #536158; }
+    .field input, .field select, .field textarea { width: 100%; border: 1px solid #e3e8e1; border-radius: 8px; padding: 9px 10px; outline: none; color: var(--ink); background: white; font-size: 11px; }
+    .field textarea { min-height: 72px; resize: vertical; }
+    .form-actions { display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid #f0f1ed; margin-top: 20px; padding-top: 16px; }
+    .toast { position: fixed; z-index: 20; bottom: 22px; left: 50%; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; padding: 11px 16px; background: #253d2e; color: white; border-radius: 9px; font-size: 11px; box-shadow: var(--shadow); transition: .2s ease; }
+    .toast.show { transform: translate(-50%, 0); opacity: 1; }
+    .mobile-menu { display: none; border: 0; background: transparent; color: var(--ink); }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media (max-width: 1050px) {
+      .content { padding: 30px 26px 50px; } .topbar { padding: 0 26px; }
+      .stats { grid-template-columns: repeat(2, 1fr); } .dashboard-grid { grid-template-columns: 1fr; }
+      .guest-cards { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    @media (max-width: 700px) {
+      .sidebar { width: 246px; transform: translateX(-100%); transition: transform .2s ease; box-shadow: var(--shadow); }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; } .topbar { height: 64px; padding: 0 17px; }
+      .mobile-menu { display: inline-grid; place-items: center; width: 30px; height: 30px; }
+      .top-left { display: flex; align-items: center; gap: 8px; }
+      .today { display: none; } .content { padding: 27px 16px 40px; }
+      .page-head { align-items: flex-start; flex-direction: column; margin-bottom: 21px; }
+      .stats { gap: 9px; } .stat-card { min-height: 110px; padding: 14px; }
+      .stat-top { font-size: 10px; } .stat-value { font-size: 24px; }
+      .toolbar { flex-wrap: wrap; width: 100%; } .search-box { flex: 1; }
+      .search-box input { width: 100%; } .toolbar select { flex: 1; }
+      .list-panel .panel-head { align-items: flex-start; flex-direction: column; gap: 12px; }
+      .guest-cards { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; } .field.full { grid-column: auto; }
+      .modal-backdrop { padding: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19 12 5l9 14H3Z"/><path d="m8.7 19 3.3-5 3.3 5M12 5v4"/></svg>
+        </div>
+        <div><div class="brand-name">Camping Waischenfeld</div><div class="brand-sub">Gäste &amp; Reservierungen</div></div>
+      </div>
+      <div class="nav-label">MENÜ</div>
+      <nav class="nav" aria-label="Hauptnavigation">
+        <button class="active" data-page="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg>Übersicht</button>
+        <button data-page="reservations"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>Reservierungen</button>
+        <button data-page="guests"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 8v6m3-3h-6"/></svg>Gäste</button>
+      </nav>
+      <div class="sidebar-note"><strong>Deine Daten bleiben bei dir</strong><span>Alle Einträge werden lokal in diesem Browser gespeichert und nicht an einen Server übertragen.</span></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="top-left">
+          <button class="mobile-menu" id="mobileMenu" aria-label="Menü öffnen"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+          <div class="breadcrumb">Campingplatz <span aria-hidden="true">/</span> <strong id="breadcrumbTitle">Übersicht</strong></div>
+        </div>
+        <div class="top-actions"><span class="today" id="todayLabel"></span><div class="avatar" aria-label="Camping Waischenfeld">CW</div></div>
+      </header>
+      <div class="content" id="content"></div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <div><h2 id="modalTitle">Neue Reservierung</h2><p>Gäste- und Aufenthaltsdaten eintragen</p></div>
+        <button class="close-button" id="closeModal" aria-label="Dialog schließen">×</button>
+      </div>
+      <form class="form" id="reservationForm">
+        <input type="hidden" name="id">
+        <div class="form-grid">
+          <div class="field"><label for="guestName">Name *</label><input id="guestName" name="guestName" required maxlength="100" autocomplete="name" placeholder="Vor- und Nachname"></div>
+          <div class="field"><label for="guestEmail">E-Mail</label><input id="guestEmail" name="guestEmail" type="email" maxlength="160" autocomplete="email" placeholder="name@beispiel.de"></div>
+          <div class="field"><label for="guestPhone">Telefon</label><input id="guestPhone" name="guestPhone" type="tel" maxlength="40" autocomplete="tel" placeholder="+49 ..."></div>
+          <div class="field"><label for="guestCount">Anzahl Gäste *</label><input id="guestCount" name="guestCount" type="number" min="1" max="50" value="2" required></div>
+          <div class="field"><label for="arrival">Anreise *</label><input id="arrival" name="arrival" type="date" required></div>
+          <div class="field"><label for="departure">Abreise *</label><input id="departure" name="departure" type="date" required></div>
+          <div class="field"><label for="pitch">Stellplatz / Bereich</label><input id="pitch" name="pitch" maxlength="80" placeholder="z. B. Stellplatz 12"></div>
+          <div class="field"><label for="bookingStatus">Status</label><select id="bookingStatus" name="status"><option value="confirmed">Bestätigt</option><option value="pending">Anfrage</option><option value="cancelled">Storniert</option></select></div>
+          <div class="field full"><label for="notes">Notizen</label><textarea id="notes" name="notes" maxlength="1000" placeholder="Wünsche, Absprachen oder weitere Hinweise"></textarea></div>
+        </div>
+        <div class="form-actions"><button type="button" class="button button-secondary" id="cancelModal">Abbrechen</button><button type="submit" class="button button-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg><span id="saveLabel">Reservierung speichern</span></button></div>
+      </form>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      "use strict";
+      const STORAGE_KEY = "waischenfeld-camping-crm-v1";
+      const content = document.getElementById("content");
+      const form = document.getElementById("reservationForm");
+      const modal = document.getElementById("modalBackdrop");
+      const pageNames = { dashboard: "Übersicht", reservations: "Reservierungen", guests: "Gäste" };
+      let page = "dashboard";
+      let query = "";
+      let statusFilter = "all";
+      let toastTimer;
+
+      function loadData() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"reservations":[]}');
+          return { reservations: Array.isArray(saved.reservations) ? saved.reservations : [] };
+        } catch {
+          return { reservations: [] };
+        }
+      }
+      let data = loadData();
+      const saveData = () => {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch {
+          showToast("Speichern nicht möglich – bitte Browser-Speicher prüfen.");
+        }
+      };
+      const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+      const icon = (name, extra = "") => {
+        const paths = {
+          calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+          users: '<path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 8v6m3-3h-6"/>',
+          clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+          plus: '<path d="M12 5v14M5 12h14"/>',
+          search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+          edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/>',
+          trash: '<path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/>',
+          download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>'
+        };
+        return `<svg class="${extra}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]}</svg>`;
+      };
+      const formatDate = value => value ? new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(`${value}T12:00:00`)) : "–";
+      const dateToday = () => new Date().toISOString().slice(0, 10);
+      const sortedReservations = () => [...data.reservations].sort((a, b) => (a.arrival || "").localeCompare(b.arrival || ""));
+      const statusName = status => ({ confirmed: "Bestätigt", pending: "Anfrage", cancelled: "Storniert" }[status] || "Anfrage");
+      const statusClass = status => ({ confirmed: "confirmed", pending: "pending", cancelled: "cancelled" }[status] || "pending");
+      const initials = name => String(name || "?").trim().split(/\s+/).slice(0, 2).map(word => word[0] || "").join("").toUpperCase();
+      const matches = item => {
+        const text = [item.guestName, item.guestEmail, item.guestPhone, item.pitch, item.notes].join(" ").toLocaleLowerCase("de");
+        return text.includes(query.toLocaleLowerCase("de")) && (statusFilter === "all" || item.status === statusFilter);
+      };
+      function showToast(message) {
+        const toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 2800);
+      }
+      function guestCell(item) {
+        return `<div class="guest-cell"><span class="guest-initials">${escapeHtml(initials(item.guestName))}</span><div><div class="guest-name">${escapeHtml(item.guestName)}</div><div class="guest-contact">${escapeHtml(item.guestEmail || item.guestPhone || "Keine Kontaktdaten")}</div></div></div>`;
+      }
+      function statusPill(status) { return `<span class="status status-${statusClass(status)}">${statusName(status)}</span>`; }
+      function reservationRows(items, includeActions = false) {
+        if (!items.length) return `<tr><td colspan="${includeActions ? 6 : 5}"><div class="empty"><strong>Keine Reservierungen vorhanden</strong>Lege die erste Reservierung über „Neue Reservierung“ an.</div></td></tr>`;
+        return items.map(item => `<tr>
+          <td>${guestCell(item)}</td><td>${formatDate(item.arrival)} – ${formatDate(item.departure)}</td>
+          <td>${escapeHtml(item.pitch || "–")}</td><td>${Number(item.guestCount) || 1}</td>
+          <td>${statusPill(item.status)}</td>${includeActions ? `<td><div class="row-actions"><button class="icon-button" data-edit="${escapeHtml(item.id)}" aria-label="Reservierung bearbeiten">${icon("edit")}</button><button class="icon-button danger" data-delete="${escapeHtml(item.id)}" aria-label="Reservierung löschen">${icon("trash")}</button></div></td>` : ""}
+        </tr>`).join("");
+      }
+      function renderDashboard() {
+        const today = dateToday();
+        const active = data.reservations.filter(item => item.status !== "cancelled");
+        const upcoming = active.filter(item => item.departure >= today).sort((a, b) => a.arrival.localeCompare(b.arrival));
+        const pending = data.reservations.filter(item => item.status === "pending").length;
+        const guests = [...new Set(data.reservations.map(item => (item.guestEmail || item.guestName).toLocaleLowerCase("de")))].length;
+        const recent = [...data.reservations].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")).slice(0, 4);
+        content.innerHTML = `
+          <div class="page-head"><div><div class="eyebrow">Guten Tag</div><h1>Deine Camping-Übersicht</h1><p class="page-subtitle">Behalte Reservierungen und Gäste an einem Ort im Blick.</p></div><button class="button button-primary" data-new>${icon("plus")}Neue Reservierung</button></div>
+          <section class="stats" aria-label="Kennzahlen">
+            <article class="stat-card"><div class="stat-top">Kommende Aufenthalte <span class="stat-icon">${icon("calendar")}</span></div><div class="stat-value">${upcoming.length}</div><div class="stat-foot">Nicht stornierte Reservierungen</div></article>
+            <article class="stat-card"><div class="stat-top">Gäste im System <span class="stat-icon">${icon("users")}</span></div><div class="stat-value">${guests}</div><div class="stat-foot">Eindeutige Gästekontakte</div></article>
+            <article class="stat-card"><div class="stat-top">Offene Anfragen <span class="stat-icon orange">${icon("clock")}</span></div><div class="stat-value">${pending}</div><div class="stat-foot">Noch nicht bestätigte Reservierungen</div></article>
+            <article class="stat-card"><div class="stat-top">Alle Reservierungen <span class="stat-icon">${icon("calendar")}</span></div><div class="stat-value">${data.reservations.length}</div><div class="stat-foot">In diesem Browser gespeichert</div></article>
+          </section>
+          <div class="dashboard-grid">
+            <section class="panel"><div class="panel-head"><div><div class="panel-title">Kommende Aufenthalte</div><div class="panel-caption">Anreisen ab heute</div></div><button class="text-link" data-goto="reservations">Alle anzeigen →</button></div>
+              <div class="table-wrap"><table><thead><tr><th>Gast</th><th>Aufenthalt</th><th>Stellplatz</th><th>Gäste</th><th>Status</th></tr></thead><tbody>${reservationRows(upcoming.slice(0, 5))}</tbody></table></div>
+            </section>
+            <section class="panel"><div class="panel-head"><div><div class="panel-title">Zuletzt angelegt</div><div class="panel-caption">Deine letzten Einträge</div></div></div>
+              <div class="activity">${recent.length ? recent.map(item => `<div class="activity-item"><div class="activity-icon">${icon("calendar")}</div><div><div class="activity-title">${escapeHtml(item.guestName)} · ${formatDate(item.arrival)}</div><div class="activity-meta">${statusName(item.status)} · ${Number(item.guestCount) || 1} Gäste</div></div></div>`).join("") : `<div class="empty"><strong>Noch keine Einträge</strong>Neue Reservierungen erscheinen hier.</div>`}</div>
+            </section>
+          </div>`;
+      }
+      function renderReservations() {
+        const list = sortedReservations().filter(matches);
+        content.innerHTML = `
+          <div class="page-head"><div><div class="eyebrow">Aufenthalte verwalten</div><h1>Reservierungen</h1><p class="page-subtitle">${data.reservations.length} Einträge insgesamt</p></div><button class="button button-primary" data-new>${icon("plus")}Neue Reservierung</button></div>
+          <section class="panel list-panel"><div class="panel-head"><div><div class="panel-title">Alle Reservierungen</div><div class="panel-caption">Gästedaten und Aufenthaltsdetails</div></div>
+            <div class="toolbar"><label class="search-box">${icon("search")}<span class="visually-hidden">Reservierungen suchen</span><input id="searchInput" type="search" placeholder="Suchen …" value="${escapeHtml(query)}"></label>
+              <label class="visually-hidden" for="statusFilter">Status filtern</label><select id="statusFilter"><option value="all">Alle Status</option><option value="confirmed">Bestätigt</option><option value="pending">Anfrage</option><option value="cancelled">Storniert</option></select>
+              <button class="button button-secondary" id="exportCsv">${icon("download")}CSV</button>
+            </div>
+          </div><div class="table-wrap"><table><thead><tr><th>Gast</th><th>Aufenthalt</th><th>Stellplatz</th><th>Gäste</th><th>Status</th><th><span class="visually-hidden">Aktionen</span></th></tr></thead><tbody>${reservationRows(list, true)}</tbody></table></div></section>`;
+        document.getElementById("statusFilter").value = statusFilter;
+      }
+      function renderGuests() {
+        const byEmail = new Map();
+        data.reservations.forEach(item => {
+          const key = (item.guestEmail || `${item.guestName}-${item.guestPhone || ""}`).toLocaleLowerCase("de");
+          const existing = byEmail.get(key);
+          if (!existing || (item.createdAt || "") > (existing.createdAt || "")) byEmail.set(key, { ...item, visits: (existing?.visits || 0) + 1 });
+          else existing.visits += 1;
+        });
+        const list = [...byEmail.values()].filter(item => [item.guestName, item.guestEmail, item.guestPhone].join(" ").toLocaleLowerCase("de").includes(query.toLocaleLowerCase("de")));
+        content.innerHTML = `
+          <div class="page-head"><div><div class="eyebrow">Deine Gästedatei</div><h1>Gäste</h1><p class="page-subtitle">Kontakte aus deinen Reservierungen im Überblick.</p></div><button class="button button-primary" data-new>${icon("plus")}Neue Reservierung</button></div>
+          ${list.length ? `<div class="guest-cards">${list.map(item => `<article class="guest-card"><div class="guest-card-head"><span class="guest-initials">${escapeHtml(initials(item.guestName))}</span><div><div class="guest-name">${escapeHtml(item.guestName)}</div><div class="guest-contact">${escapeHtml(item.guestEmail || "Keine E-Mail hinterlegt")}</div></div></div><p>${escapeHtml(item.guestPhone || "Keine Telefonnummer hinterlegt")}</p>${item.notes ? `<p>${escapeHtml(item.notes)}</p>` : ""}<div class="guest-card-foot"><span>${item.visits} ${item.visits === 1 ? "Reservierung" : "Reservierungen"}</span><span>Zuletzt: ${formatDate(item.arrival)}</span></div></article>`).join("")}</div>` : `<section class="panel"><div class="empty"><strong>${query ? "Keine passenden Gäste" : "Noch keine Gäste erfasst"}</strong>${query ? "Passe den Suchbegriff an." : "Gästekontakte werden mit der ersten Reservierung angelegt."}</div></section>`}`;
+      }
+      function render() {
+        document.getElementById("breadcrumbTitle").textContent = pageNames[page];
+        document.querySelectorAll(".nav button").forEach(button => button.classList.toggle("active", button.dataset.page === page));
+        if (page === "dashboard") renderDashboard();
+        if (page === "reservations") renderReservations();
+        if (page === "guests") renderGuests();
+      }
+      function openModal(item) {
+        form.reset();
+        form.elements.id.value = item?.id || "";
+        form.elements.guestName.value = item?.guestName || "";
+        form.elements.guestEmail.value = item?.guestEmail || "";
+        form.elements.guestPhone.value = item?.guestPhone || "";
+        form.elements.guestCount.value = item?.guestCount || 2;
+        form.elements.arrival.value = item?.arrival || "";
+        form.elements.departure.value = item?.departure || "";
+        form.elements.pitch.value = item?.pitch || "";
+        form.elements.status.value = item?.status || "confirmed";
+        form.elements.notes.value = item?.notes || "";
+        document.getElementById("modalTitle").textContent = item ? "Reservierung bearbeiten" : "Neue Reservierung";
+        document.getElementById("saveLabel").textContent = item ? "Änderungen speichern" : "Reservierung speichern";
+        modal.classList.add("open");
+        document.getElementById("guestName").focus();
+      }
+      function closeModal() { modal.classList.remove("open"); }
+      function handleSubmit(event) {
+        event.preventDefault();
+        const values = Object.fromEntries(new FormData(form).entries());
+        if (values.departure <= values.arrival) {
+          form.elements.departure.setCustomValidity("Die Abreise muss nach der Anreise liegen.");
+          form.elements.departure.reportValidity();
+          return;
+        }
+        form.elements.departure.setCustomValidity("");
+        const existing = data.reservations.find(item => item.id === values.id);
+        const reservation = {
+          id: values.id || (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`),
+          guestName: values.guestName.trim(),
+          guestEmail: values.guestEmail.trim(),
+          guestPhone: values.guestPhone.trim(),
+          guestCount: Number(values.guestCount),
+          arrival: values.arrival,
+          departure: values.departure,
+          pitch: values.pitch.trim(),
+          status: values.status,
+          notes: values.notes.trim(),
+          createdAt: existing?.createdAt || new Date().toISOString()
+        };
+        if (existing) data.reservations = data.reservations.map(item => item.id === reservation.id ? reservation : item);
+        else data.reservations.push(reservation);
+        saveData();
+        closeModal();
+        render();
+        showToast(existing ? "Reservierung aktualisiert." : "Reservierung gespeichert.");
+      }
+      function exportCsv() {
+        const rows = [["Name", "E-Mail", "Telefon", "Anreise", "Abreise", "Gäste", "Stellplatz", "Status", "Notizen"]];
+        sortedReservations().forEach(item => rows.push([item.guestName, item.guestEmail, item.guestPhone, item.arrival, item.departure, item.guestCount, item.pitch, statusName(item.status), item.notes]));
+        const csv = "\uFEFF" + rows.map(row => row.map(value => `"${String(value ?? "").replace(/"/g, '""')}"`).join(";")).join("\r\n");
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+        link.download = `reservierungen-waischenfeld-${dateToday()}.csv`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      }
+
+      document.querySelectorAll(".nav button").forEach(button => button.addEventListener("click", () => {
+        page = button.dataset.page; query = ""; statusFilter = "all"; render();
+        document.getElementById("sidebar").classList.remove("open");
+      }));
+      document.getElementById("mobileMenu").addEventListener("click", () => document.getElementById("sidebar").classList.toggle("open"));
+      document.getElementById("closeModal").addEventListener("click", closeModal);
+      document.getElementById("cancelModal").addEventListener("click", closeModal);
+      modal.addEventListener("click", event => { if (event.target === modal) closeModal(); });
+      document.addEventListener("keydown", event => { if (event.key === "Escape") closeModal(); });
+      form.addEventListener("submit", handleSubmit);
+      form.elements.departure.addEventListener("input", () => form.elements.departure.setCustomValidity(""));
+      content.addEventListener("click", event => {
+        const newButton = event.target.closest("[data-new]");
+        const gotoButton = event.target.closest("[data-goto]");
+        const editButton = event.target.closest("[data-edit]");
+        const deleteButton = event.target.closest("[data-delete]");
+        if (newButton) openModal();
+        if (gotoButton) { page = gotoButton.dataset.goto; query = ""; statusFilter = "all"; render(); }
+        if (editButton) openModal(data.reservations.find(item => item.id === editButton.dataset.edit));
+        if (deleteButton) {
+          const item = data.reservations.find(reservation => reservation.id === deleteButton.dataset.delete);
+          if (item && window.confirm(`Reservierung für ${item.guestName} wirklich löschen?`)) {
+            data.reservations = data.reservations.filter(reservation => reservation.id !== item.id);
+            saveData(); render(); showToast("Reservierung gelöscht.");
+          }
+        }
+      });
+      content.addEventListener("input", event => {
+        if (event.target.id === "searchInput") { query = event.target.value; renderReservations(); const input = document.getElementById("searchInput"); input.focus(); input.setSelectionRange(query.length, query.length); }
+      });
+      content.addEventListener("change", event => {
+        if (event.target.id === "statusFilter") { statusFilter = event.target.value; renderReservations(); }
+      });
+      content.addEventListener("click", event => { if (event.target.closest("#exportCsv")) exportCsv(); });
+      document.getElementById("todayLabel").textContent = new Intl.DateTimeFormat("de-DE", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
+      render();
+    })();
+  </script>
+</body>
+</html>
